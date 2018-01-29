@@ -25,17 +25,19 @@ public class ExcelFile {
 	
 	private int cursor;
 	
-	public ExcelFile(String fileName, TableModel tableModel) throws Exception {
+	private int columnStartIndex;
+	
+	public ExcelFile(String fileName, TableModel tableModel, int columnStartIndex) throws Exception {
 		 this.wb = WorkbookFactory.create(new File(fileName));
 		 this.sheet = this.wb.getSheetAt(0);
 		 this.tableModel = tableModel;
 		 this.rowCount = this.sheet.getLastRowNum();
 
 		 Row row = this.sheet.getRow(0);
-		 this.columnCount = row.getLastCellNum() - this.tableModel.getStartColumnIndex();
+		 this.columnCount = row.getLastCellNum() - columnStartIndex;
 		 this.columnNames = new String[this.columnCount];
 		 for(int c=0; c<this.columnCount; c++) {
-			 Cell cell = row.getCell(c + this.tableModel.getStartColumnIndex());
+			 Cell cell = row.getCell(c + columnStartIndex);
 			 this.columnNames[c] = cell == null ? null : cell.toString();
 		 }
 	}
@@ -59,12 +61,12 @@ public class ExcelFile {
 	}
 	
 	
-	public Object[] read() throws ExcelException {
+	public synchronized Object[] read() throws ExcelException {
 		Object[] result = new Object[columnCount];
 		Row row = this.sheet.getRow(this.cursor);
 		for(int c=0; c<this.columnNames.length; c++) {
 			ColumnModel cm = this.tableModel.get(this.columnNames[c]);
-			String cellValue = row.getCell(c + this.tableModel.getStartColumnIndex()).toString();
+			String cellValue = row.getCell(c + columnStartIndex).toString();
 			if(cellValue != null && cellValue.trim().length() == 0) {
 				cellValue = null;
 			}
